@@ -53,7 +53,7 @@
       <nav class="nav">
         <a href="#home" class="nav-link">Início</a>
         <a href="#about" class="nav-link">Sobre</a>
-        <a href="#functions" class="nav-link">Funções</a>
+        <a href="#functions" class="nav-link">Usuários</a>
         <a href="#tools" class="nav-link">Ferramentas</a>
         <a href="#faq" class="nav-link">FAQ</a>
       </nav>
@@ -75,15 +75,15 @@
     </header>
 
   <section id="home" class="cover">
-      <img src="img/CAPA.png" width="100%">
-      <div class="cover-content">
-        <img src="img/Logo vertical - Off-white.svg" width="650px">
-        <div class="cover-btns">
-          <a href="#about" class="nav-link"><button id="about-btn">Sobre</button></a>
-          <button id="login-btn">Entrar</button>
-        </div>
+    <img src="img/CAPA.png" width="100%">
+    <div class="cover-content">
+      <img src="img/Logo vertical - Off-white.svg" width="650px">
+      <div class="cover-btns">
+        <a href="#about" class="nav-link"><button id="about-btn">Sobre</button></a>
+        <button id="login-btn">Entrar</button>
       </div>
-    </section>
+    </div>
+  </section>
 
   <section id="about" class="about">
       <h1>Sobre o sistema</h1>
@@ -107,7 +107,7 @@
     </section>
 
   <section id="functions" class="users">
-      <h1>Funções</h1>
+      <h1>Usuários</h1>
       <article class="user-cards">
         <div class="user-card">
           <h2>Idosos</h2>
@@ -162,7 +162,7 @@
         <div class="card-icon">🖥️</div>
         <h2 class="card-title">Sistema</h2>
         <div class="descricao">
-          Centraliza todas as funções. Permite gerenciar usuários, relatórios e configurações gerais.
+          Centraliza todas as Usuários. Permite gerenciar usuários, relatórios e configurações gerais.
         </div>
       </div>
       </div>
@@ -262,7 +262,7 @@
             <h4>Links úteis</h4>
             <ul>
               <li><a href="#about" class="nav-link">Sobre</a></li>
-              <li><a href="#functions" class="nav-link">Funções</a></li>
+              <li><a href="#functions" class="nav-link">Usuários</a></li>
               <li><a href="#tools" class="nav-link">Ferramentas</a></li>
               <li><a href="#faq" class="nav-link">FAQ</a></li>
             </ul>
@@ -271,7 +271,7 @@
           <div class="links-col">
             <h4>Recursos</h4>
             <ul>
-              <li><a href="#" target="_blank">Documentação</a></li>
+              <li><a href="#" target="_blank">Política de privacidade</a></li>
               <li><a href="https://drive.google.com/file/d/1-KJCYyvLwMm-UtUzhly4rnmiipdGvW8K/view?usp=sharing" target="_blank">Identidade Visual</a></li>
             </ul>
           </div>
@@ -363,32 +363,50 @@
       });
     </script>
 
-    <script>
-      const userIcon = document.getElementById('userIcon');
-      const dropdown = document.getElementById('loginDropdown');
+  <script>
+    const userIcon = document.getElementById('userIcon');
+    const dropdown = document.getElementById('loginDropdown');
+    const emailInput = document.getElementById('email');
+    const senhaInput = document.getElementById('senha');
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('login-btn'); // ← botão da capa
 
-      // Alternar dropdown ao clicar no ícone
-      userIcon.addEventListener('click', (e) => {
-        e.stopPropagation(); // Impede que o clique no ícone feche imediatamente
+    // Alternar dropdown ao clicar no ícone
+    userIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
         dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-      });
+    });
 
-      // Fechar dropdown ao clicar fora dele
-      document.addEventListener('click', (e) => {
+    // 🔹 Novo: abrir o pop-up também ao clicar no botão "Entrar" da capa
+    loginBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+
+        // Scroll suave até o topo (onde o pop-up aparece)
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Prevenir fechamento ao clicar dentro do form
+    [emailInput, senhaInput, loginForm].forEach(el =>
+        el.addEventListener('click', e => e.stopPropagation())
+    );
+
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', (e) => {
         if (!userIcon.contains(e.target) && !dropdown.contains(e.target)) {
-          dropdown.style.display = 'none';
+            dropdown.style.display = 'none';
         }
-      });
+    });
 
-      // Tratamento do formulário (opcional)
-      document.getElementById('loginForm')?.addEventListener('submit', function(e) {
+    // Tratamento do formulário
+    loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const email = document.getElementById('email').value;
-        const senha = document.getElementById('senha').value;
+        const email = emailInput.value;
+        const senha = senhaInput.value;
 
         alert(`Login tentado:\nE-mail: ${email}\nSenha: ${senha}\n(Não enviamos dados reais!)`);
-      });
-    </script>
+    });
+  </script>
 
     <script>
       // Garante que só 1 card fique expandido por vez
@@ -452,6 +470,9 @@
         }
       });
     </script>
+
+    <!-- Overlay (fundo escurecido) -->
+    <div id="overlay" class="overlay"></div>
 
   </body>
 </html>

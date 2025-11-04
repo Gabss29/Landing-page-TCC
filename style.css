@@ -461,6 +461,32 @@ hr{
   margin-top: 8px;
 }
 
+/* Fundo escurecido */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+  z-index: 999;
+}
+
+/* Quando ativo */
+.overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.login-dropdown.active {
+  display: block;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
 .brand-icons{
   position: absolute;
   z-index: 1000;

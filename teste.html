@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ferramentas - Expansão Vertical</title>
+  <style>
+    body {
+      background: #1a365d;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 600px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      position: relative;
+      transition: all 0.3s ease;
+      border-left: 6px solid #2c3e50;
+      height: 140px; /* Altura inicial */
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+    }
+
+    .card-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      color: #2c3e50;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    .descricao {
+      margin-top: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #34495e;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      padding: 0 10px;
+    }
+
+    /* Estado expandido */
+    .card.expandido {
+      height: 220px; /* Altura expandida */
+    }
+
+    .card.expandido .descricao {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Cores */
+    .card:nth-child(1) { border-left-color: #2196F3; } /* Espelho */
+    .card:nth-child(2) { border-left-color: #FF9800; } /* Câmera */
+    .card:nth-child(3) { border-left-color: #4CAF50; } /* Sensores */
+    .card:nth-child(4) { border-left-color: #9C27B0; } /* Sistema */
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Card Espelho -->
+    <div class="card" onmouseenter="expandirCard(this)" onmouseleave="retrairCard(this)">
+      <div class="card-icon">🪞</div>
+      <h3 class="card-title">Espelho</h3>
+      <div class="descricao">
+        Reflete a atividade do usuário em tempo real. Ideal para monitoramento discreto.
+      </div>
+    </div>
+
+    <!-- Card Câmera -->
+    <div class="card" onmouseenter="expandirCard(this)" onmouseleave="retrairCard(this)">
+      <div class="card-icon">📹</div>
+      <h3 class="card-title">Câmera</h3>
+      <div class="descricao">
+        Grava vídeo e imagens com detecção de movimento. Armazena dados seguros na nuvem.
+      </div>
+    </div>
+
+    <!-- Card Sensores -->
+    <div class="card" onmouseenter="expandirCard(this)" onmouseleave="retrairCard(this)">
+      <div class="card-icon">📡</div>
+      <h3 class="card-title">Sensores</h3>
+      <div class="descricao">
+        Detecta queda, movimento e alterações de temperatura. Alerta automático em caso de emergência.
+      </div>
+    </div>
+
+    <!-- Card Sistema -->
+    <div class="card" onmouseenter="expandirCard(this)" onmouseleave="retrairCard(this)">
+      <div class="card-icon">🖥️</div>
+      <h3 class="card-title">Sistema</h3>
+      <div class="descricao">
+        Centraliza todas as funções. Permite gerenciar usuários, relatórios e configurações gerais.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Garante que só 1 card fique expandido por vez
+    function expandirCard(card) {
+      // Fecha todos os cards expandidos
+      document.querySelectorAll('.card').forEach(c => {
+        c.classList.remove('expandido');
+      });
+      // Expande o card atual
+      card.classList.add('expandido');
+    }
+
+    function retrairCard(card) {
+      setTimeout(() => {
+        if (!card.matches(':hover')) {
+          card.classList.remove('expandido');
+        }
+      }, 200); // Delay pequeno para não fechar se o mouse estiver entre os elementos
+    }
+  </script>
+
+</body>
+</html>

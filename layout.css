@@ -24,6 +24,9 @@
   box-sizing: border-box;
 }
 
+/* ======================================= */
+/* index.php */
+/* ======================================= */
 body {
   font-family: "Inter", Tahoma, Verdana, sans-serif;
   background-color: var(--dark-blue);
@@ -514,4 +517,139 @@ hr{
   margin-left: 50px;
   margin-top: -1500px;
   transform: rotate(25deg);
+}
+
+/* ======================================= */
+/* painel.php */
+/* ======================================= */
+.painel {
+  background-color: var(--white);
+  margin-left: 125px;
+  margin-right: 200px;
+  padding: 20px;
+}
+
+.painel h1, .painel h2, .painel h3, .painel h4, .painel h5, .painel h6{
+    color: var(--dark-blue);
+}
+
+.painel p, .painel strong, .painel span, .painel label{
+    color: var(--off-black);
+}
+
+.painel p{
+  font-size: 1.3rem;
+}
+
+.concluida{
+  opacity: 0.6;
+  text-decoration: line-through;
+  color: #001520;
+}
+
+.tarefa{
+  color: var(--off-black);
+  font-size: 1.2rem;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  margin-top: 5px;
+}
+
+.container{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--white);
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+  padding: 20px;
+  border-radius: 4px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  width: 50%;
+}
+
+.welcome{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  margin-top: -300px;
+}
+
+.input-item{
+  height: 35px;
+  width: 100%;
+  border: none;
+  background-color: var(--white);
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+  border-radius: 4px;
+}
+
+.input-btn{
+  width: 100%;
+  padding: 8px;
+  background-color: var(--dark-blue);
+  color: var(--off-white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 15px;
+  margin-top: 4px;
+}
+
+.painel label{
+  text-align: left;
+  align-items: flex-start;
+  justify-content: left;
+}
+
+/* ===== LAYOUT PRINCIPAL DO IDOSO ===== */
+
+.container-perfil-idoso {
+  display: flex;
+  width: 100%;
+  gap: 40px;
+  margin-top: 250px;
+  align-items: flex-start;
+}
+
+/* Antes da câmera ligar → tarefas usam toda a largura */
+.tarefas-container {
+  flex: 1;
+  transition: width .3s;
+}
+
+/* Quando a câmera ligar → JS define width: 50%, então usamos isso */
+.tarefas-container.metade {
+  flex: 1;
+  max-width: 50%;
+}
+
+/* VIDEO AO LADO DAS TAREFAS */
+.video {
+  flex: 1;                 /* Divide a tela igualmente */
+  max-width: 50%;          /* Não ultrapassa metade da tela */
+  display: none;           /* JS ativa */
+  height: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  position: relative;      /* Remove o fixed */
+}
+
+/* Video interno */
+#video {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.container-perfil-idoso{
+  margin-top: 150px;
 }

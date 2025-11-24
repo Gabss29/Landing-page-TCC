@@ -246,21 +246,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
     <section id="about" class="about">
         <h1>Sobre o sistema</h1>
         <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            Duis scelerisque, ante quis lobortis facilisis,
-            ipsum neque rutrum risus, nec pulvinar sem justo nec sapien.
-            Nam congue dolor ut dolor fringilla dictum. Ut at eleifend mauris.
-            Nulla non quam eleifend, congue odio quis, ultricies odio.
-            Etiam cursus purus molestie orci molestie, vitae molestie nulla feugiat.
-            Donec maximus a elit sit amet rhoncus. Praesent gravida augue ut leo blandit,
-            et efficitur felis accumsan. Etiam et pretium orci. Vestibulum arcu nisi,
-            sagittis ut lectus et, sollicitudin fringilla magna.
-            Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-            Nulla lorem tellus, maximus sodales ex vel, porta mattis nibh.
-            Sed hendrerit leo non ante auctor hendrerit. Etiam elit diam,
-            tempor sed nisl non, laoreet dapibus nisl. Praesent viverra neque in nulla venenatis,
-            quis ullamcorper felis sodales. Phasellus vestibulum cursus elit eu sollicitudin.
-            Phasellus in ultrices risus.
+            O sistema foi desenvolvido com o propósito de promover o monitoramento integral da saúde, 
+            o bem-estar e a integração social de pessoas idosas, oferecendo suporte tecnológico acessível e seguro. 
+            A iniciativa nasce da compreensão de que envelhecer não se resume apenas a viver mais, 
+            mas a garantir que essa etapa da vida seja marcada por autonomia, dignidade e qualidade. 
+            A missão central do sistema está alinhada à ideia de que o envelhecimento deve ser saudável, 
+            ativo e socialmente participativo.
+            <br><br>
+            Ao reunir tecnologia, sensibilidade e responsabilidade social, 
+            o projeto se consolida como uma solução inovadora voltada à melhoria da qualidade de vida da população idosa. 
+            Seu objetivo é tornar o envelhecimento um processo mais seguro, acolhedor e conectado, 
+            contribuindo para uma sociedade mais inclusiva e humana.
         </p>
     </section>
 
@@ -292,19 +288,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
         <h1>Ferramentas</h1>
         <!-- Card Espelho -->
         <div class="tools-content">
-            <div class="card" onmouseenter="expandirCard(this)" onmouseleave="retrairCard(this)">
-                <div class="card-icon">🪞</div>
-                <h2 class="card-title">Espelho</h2>
-                <div class="descricao">
-                    Reflete a atividade do usuário em tempo real. Ideal para monitoramento discreto.
-                </div>
-            </div>
             <!-- Card Câmera -->
             <div class="card" onmouseenter="expandirCard(this)" onmouseleave="retrairCard(this)">
                 <div class="card-icon">📹</div>
                 <h2 class="card-title">Câmera</h2>
                 <div class="descricao">
-                    Grava vídeo e imagens com detecção de movimento. Armazena dados seguros na nuvem.
+                    A câmera integrada é ativada automaticamente em emergências, permitindo que familiares 
+                    acompanhem o idoso em tempo real e garantindo uma resposta rápida a situações de risco.
                 </div>
             </div>
             <!-- Card Sensores -->
@@ -312,7 +302,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
                 <div class="card-icon">📡</div>
                 <h2 class="card-title">Sensores</h2>
                 <div class="descricao">
-                    Detecta queda, movimento e alterações de temperatura. Alerta automático em caso de emergência.
+                    Os sensores do sistema monitoram automaticamente sinais de risco, detectando quedas, 
+                    inatividade ou mudanças no ambiente para garantir respostas rápidas e maior segurança ao idoso.
                 </div>
             </div>
             <!-- Card Sistema -->
@@ -320,7 +311,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
                 <div class="card-icon">🖥️</div>
                 <h2 class="card-title">Sistema</h2>
                 <div class="descricao">
-                    Centraliza todas as Usuários. Permite gerenciar usuários, relatórios e configurações gerais.
+                    O sistema oferece monitoramento completo da saúde e segurança do idoso, garantindo autonomia, 
+                    bem-estar e apoio imediato em situações de risco.
                 </div>
             </div>
         </div>
@@ -346,47 +338,109 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
                     <span class="faq-toggle" aria-hidden="true">▸</span>
                 </button>
                 <div id="faq1" class="faq-answer" role="region" aria-labelledby="faq1-btn" aria-hidden="true">
-                    <p>O sistema conecta sensores, câmera e um espelho interativo para enviar notificações em tempo real aos cuidadores sobre quedas, rotinas e anomalias de comportamento.</p>
+                    <p>O sistema oferece monitoramento contínuo do idoso por meio de funcionalidades como lembretes de medicação, 
+                        check-ins diários, botão de S.O.S. e relatórios de bem-estar. Em situações de emergência, 
+                        a câmera pode ser ativada para garantir resposta rápida. O objetivo é apoiar cuidadores e 
+                        familiares com informações em tempo real sobre a saúde, rotina e segurança do idoso.</p>
                 </div>
             </div>
             <hr>
             <div class="faq-item" role="listitem">
                 <button class="faq-question" aria-expanded="false" aria-controls="faq4" id="faq4-btn">
-                    <span class="faq-title">Quais planos de suporte vocês oferecem?</span>
+                    <span class="faq-title">É possível compartilhar acesso com familiares?</span>
                     <span class="faq-toggle" aria-hidden="true">▸</span>
                 </button>
                 <div id="faq4" class="faq-answer" role="region" aria-labelledby="faq4-btn" aria-hidden="true">
-                    <p>Oferecemos planos mensais e anuais com diferentes níveis de monitoramento, instalação de sensores e suporte técnico 24/7. Consulte a página de preços para detalhes.</p>
+                    <p>Sim. O sistema foi projetado para integrar família, cuidadores e instituições, 
+                        permitindo que o idoso não fique isolado. Familiares autorizados podem acompanhar alertas, 
+                        check-ins, relatórios de bem-estar e notificações emergenciais, 
+                        reduzindo o risco de abandono e aumentando a segurança e a conexão afetiva.</p>
                 </div>
             </div>
             <hr>
             <div class="faq-item" role="listitem">
                 <button class="faq-question" aria-expanded="false" aria-controls="faq5" id="faq5-btn">
-                    <span class="faq-title">É possível compartilhar acesso com familiares?</span>
+                    <span class="faq-title">Como garantir privacidade dos dados?</span>
                     <span class="faq-toggle" aria-hidden="true">▸</span>
                 </button>
                 <div id="faq5" class="faq-answer" role="region" aria-labelledby="faq5-btn" aria-hidden="true">
-                    <p>Sim, o administrador da conta pode convidar familiares e cuidadores com permissões diferenciadas para visualizar notificações e histórico.</p>
+                    <p>O sistema segue princípios éticos e as diretrizes da LGPD. Apenas os dados essenciais são coletados, 
+                        com consentimento claro do idoso ou responsável. As informações são armazenadas de forma segura e acessíveis 
+                        somente para cuidadores e familiares autorizados. Há transparência sobre como e por que cada dado é utilizado, 
+                        garantindo respeito, segurança e proteção.</p>
                 </div>
             </div>
             <hr>
             <div class="faq-item" role="listitem">
                 <button class="faq-question" aria-expanded="false" aria-controls="faq3" id="faq3-btn">
-                    <span class="faq-title">Como garantir privacidade dos dados?</span>
+                    <span class="faq-title">Posso usar o app sem instalar sensores?</span>
                     <span class="faq-toggle" aria-hidden="true">▸</span>
                 </button>
                 <div id="faq3" class="faq-answer" role="region" aria-labelledby="faq3-btn" aria-hidden="true">
-                    <p>Adotamos criptografia em trânsito e em repouso. O acesso é controlado por permissões e consentimento do usuário. Consulte nossa política de privacidade para detalhes.</p>
+                    <p>Sim. Embora sensores possam ser adicionados futuramente para ampliar o monitoramento, 
+                        o sistema já funciona sem eles, oferecendo recursos como check-ins diários, lembretes, 
+                        alertas de S.O.S., comunicação com familiares, atividades cognitivas e acompanhamento da rotina. 
+                        Sensores e câmeras são complementares, principalmente em situações emergenciais.</p>
                 </div>
             </div>
             <hr>
             <div class="faq-item" role="listitem">
                 <button class="faq-question" aria-expanded="false" aria-controls="faq2" id="faq2-btn">
-                    <span class="faq-title">Posso usar o app sem instalar sensores?</span>
+                    <span class="faq-title">O que acontece quando o idoso não responde ao check-in diário?</span>
                     <span class="faq-toggle" aria-hidden="true">▸</span>
                 </button>
                 <div id="faq2" class="faq-answer" role="region" aria-labelledby="faq2-btn" aria-hidden="true">
-                    <p>Sim. Algumas funcionalidades, como chamadas e lembretes, funcionam apenas com o app. Recursos de monitoramento dependem de sensores instalados conforme o plano contratado.</p>
+                    <p>Se o idoso não confirmar o check-in no horário definido, o sistema envia alertas 
+                        imediatos para familiares e cuidadores. Caso a ausência persista, o aplicativo 
+                        sugere uma verificação mais ativa, como uma ligação ou acompanhamento presencial, 
+                        prevenindo situações de risco.</p>
+                </div>
+            </div>
+            <hr>
+            <div class="faq-item" role="listitem">
+                <button class="faq-question" aria-expanded="false" aria-controls="faq6" id="faq2-btn">
+                    <span class="faq-title">Como funciona o botão de S.O.S.?</span>
+                    <span class="faq-toggle" aria-hidden="true">▸</span>
+                </button>
+                <div id="faq6" class="faq-answer" role="region" aria-labelledby="faq6-btn" aria-hidden="true">
+                    <p>Ao pressionar o botão de S.O.S., o sistema aciona automaticamente uma notificação de emergência 
+                        para os contatos cadastrados e ativa a câmera, permitindo visualização imediata do ambiente. 
+                        Isso garante que a ajuda seja enviada com rapidez em casos de queda, mal-estar ou susto.</p>
+                </div>
+            </div>
+            <hr>
+            <div class="faq-item" role="listitem">
+                <button class="faq-question" aria-expanded="false" aria-controls="faq7" id="faq2-btn">
+                    <span class="faq-title">O sistema precisa de internet para funcionar?</span>
+                    <span class="faq-toggle" aria-hidden="true">▸</span>
+                </button>
+                <div id="faq7" class="faq-answer" role="region" aria-labelledby="faq7-btn" aria-hidden="true">
+                    <p>Sim. Para enviar notificações, atualizar relatórios e permitir a visualização remota durante emergências, 
+                        é necessário que o dispositivo do idoso esteja conectado à internet. No entanto, algumas funções locais, 
+                        como alertas sonoros ou lembretes de medicação, podem atuar mesmo com conexão limitada.</p>
+                </div>
+            </div>
+            <hr>
+            <div class="faq-item" role="listitem">
+                <button class="faq-question" aria-expanded="false" aria-controls="faq8" id="faq2-btn">
+                    <span class="faq-title">A câmera fica ligada o tempo todo?</span>
+                    <span class="faq-toggle" aria-hidden="true">▸</span>
+                </button>
+                <div id="faq8" class="faq-answer" role="region" aria-labelledby="faq8-btn" aria-hidden="true">
+                    <p>Não. Por questões de privacidade e ética, a câmera só é ativada durante situações de emergência, 
+                        como acionamento do S.O.S. ou ausência prolongada em check-ins, e somente para contatos autorizados.</p>
+                </div>
+            </div>
+            <hr>
+            <div class="faq-item" role="listitem">
+                <button class="faq-question" aria-expanded="false" aria-controls="faq9" id="faq2-btn">
+                    <span class="faq-title">O app envia alertas sobre quedas automaticamente?</span>
+                    <span class="faq-toggle" aria-hidden="true">▸</span>
+                </button>
+                <div id="faq9" class="faq-answer" role="region" aria-labelledby="faq9-btn" aria-hidden="true">
+                    <p>O sistema não detecta quedas sozinho ainda — essa funcionalidade depende de sensores externos que podem 
+                        ser integrados no futuro. No momento, a resposta rápida acontece por meio do S.O.S. 
+                        e da verificação automática quando o idoso não responde.</p>
                 </div>
             </div>
         </div>
@@ -510,11 +564,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
                     // Se estava expandido, remove a classe
                     if (expanded) {
                         answer.classList.remove('expanded');
-                        answer.style.maxHeight = '0';
+                        answer.style.maxHeight = '0px';
                     } else {
                         // Se estava fechado, adiciona a classe e ajusta maxHeight
                         answer.classList.add('expanded');
-                        answer.style.maxHeight = answer.scrollHeight + 'px';
+                        answer.style.maxHeight = answer.scrollHeight + '5px';
                     }
 
                     // Atualiza os atributos ARIA
@@ -626,10 +680,5 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
             }
         });
     </script>
-
-    <!-- Overlay (fundo escurecido) -->
-    <div id="overlay" class="overlay"></div>
-
 </body>
-
 </html>

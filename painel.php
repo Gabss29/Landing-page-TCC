@@ -517,7 +517,7 @@ if ($tipo === "idoso") {
                     <div id="token-modal" class="modal-overlay" style="z-index:12000;">
                         <div class="modal-popup" style="max-width:920px; width:90%; background:var(--white); color:var(--dark-blue); text-align:center;">
                             <h2 style="font-size:28px; margin-bottom:6px;">CÓDIGO DO PERFIL (COMPARTILHE COM SEU CUIDADOR)</h2>
-                            <p style="color:#444; margin:0 6px 18px 6px;">Este código permite que um cuidador vincule seu perfil e possa atribuir atividades ou ver calendários/notificações. Guarde-o em local seguro — ele será exibido agora.</p>
+                            <p style="color: #001520; margin:0 6px 18px 6px; font-weight: 400">Este código permite que um cuidador vincule seu perfil e possa atribuir atividades ou ver calendários/notificações. Guarde-o em local seguro — ele será exibido agora.</p>
                             <div class="code" style="margin-top:10px; background:#fff3f3; padding:20px;">
                                 <div style="font-family:monospace; font-size:16px; word-break:break-all; color:#001520; margin-bottom:14px;">
                                     <?php echo htmlspecialchars($display_token); ?>

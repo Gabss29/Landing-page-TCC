@@ -1201,7 +1201,7 @@ if ($tipo === "idoso") {
     /* =================================
                 EDITAR TAREFAS
     ================================== */
-    
+
     // Abrindo modal ao clicar em "Editar"
     document.querySelectorAll(".editar-tarefa-btn").forEach(btn => {
         btn.addEventListener("click", function () {
@@ -1223,14 +1223,31 @@ if ($tipo === "idoso") {
             document.getElementById("edit-horario").value = dt;
             document.getElementById("edit-status").value = status;
 
-            // Abrir modal
-            document.getElementById("modal-editar").style.display = "flex";
+            const modal = document.getElementById("modal-editar");
+
+            // Exibe o modal
+            modal.style.display = "flex";
+
+            // Força a animação de entrada
+            requestAnimationFrame(() => {
+                setTimeout(() => modal.classList.add("active"), 20);
+            });
         });
     });
 
     // Fechar modal
-    document.getElementById("fechar-modal").addEventListener("click", function () {
-        document.getElementById("modal-editar").style.display = "none";
+    document.getElementById("fechar-modal").addEventListener("click", function (e) {
+        e.preventDefault();
+
+        const modal = document.getElementById("modal-editar");
+
+        // Remove classe para rodar animação reversa
+        modal.classList.remove("active");
+
+        // Oculta após terminar a animação
+        setTimeout(() => {
+            modal.style.display = "none";
+        }, 420);
     });
 
     // Enviar formulário
@@ -1246,14 +1263,18 @@ if ($tipo === "idoso") {
 
         const json = await response.json();
 
+        const modal = document.getElementById("modal-editar");
+
         if (json.ok) {
             alert("Atividade atualizada com sucesso!");
 
-            // Fechar modal
-            document.getElementById("modal-editar").style.display = "none";
+            // Fecha com animação
+            modal.classList.remove("active");
 
-            // Recarregar a página ou atualizar só o item
-            location.reload();
+            setTimeout(() => {
+                modal.style.display = "none";
+                location.reload();
+            }, 420);
         } else {
             alert("Erro: " + json.msg);
         }

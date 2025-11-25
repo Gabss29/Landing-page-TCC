@@ -502,7 +502,7 @@ if ($tipo === "idoso") {
             <div class="token-idoso">
                 <h2>Código do perfil (compartilhe com seu cuidador)</h2>
                 <br>
-                <p>Este código permite que um cuidador vincule seu perfil e possa atribuir atividades ou ver calendários/notificações. O código é gerado pelo sistema — quando você clicar em "Ver cóigo" ele será exibido uma vez e substituído por um novo.</p>
+                <p>Este código permite que um cuidador vincule seu perfil e possa atribuir atividades ou ver calendários/notificações. O código é gerado pelo sistema — quando você clicar em "Ver código" ele será exibido uma vez e substituído por um novo.</p>
                 <br>
                 <!-- Sempre mostrar o botão Ver token; o modal só aparecerá quando o token for gerado via POST -->
                 <form method="POST" style="gap:8px; align-items:center; margin-top:6px; display:inline-block;">

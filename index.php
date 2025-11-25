@@ -68,11 +68,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
         $newsletterMsg = "Por favor, informe um e-mail válido.";
     } else {
         try {
-            // Cria a tabela caso você ainda não tenha criado
+            // Cria a tabela caso você ainda não tenha criado (adiciona unsubscribe_token + active)
             $pdo->exec("
                 CREATE TABLE IF NOT EXISTS newsletter_emails (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     email VARCHAR(150) UNIQUE NOT NULL,
+                    unsubscribe_token VARCHAR(64) NULL,
+                    active TINYINT(1) DEFAULT 1,
                     data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ");
@@ -84,9 +86,37 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
             if ($check->rowCount() > 0) {
                 $newsletterMsg = "Este e-mail já está cadastrado.";
             } else {
-                $insert = $pdo->prepare("INSERT INTO newsletter_emails (email) VALUES (?)");
-                $insert->execute([$emailNL]);
+                // gerar token para unsubscribe e inserir
+                try { $token = bin2hex(random_bytes(16)); } catch (Exception $e) { $token = bin2hex(openssl_random_pseudo_bytes(16)); }
+                $insert = $pdo->prepare("INSERT INTO newsletter_emails (email, unsubscribe_token, active) VALUES (?, ?, 1)");
+                $insert->execute([$emailNL, $token]);
                 $newsletterMsg = "Inscrição realizada com sucesso!";
+
+                // tentar enviar um e-mail de boas-vindas (opcional). Preferir SendGrid (API) quando configurado, senão PHPMailer
+                try {
+                    // preferir SendGrid se configurado (mais confiável em hosts grátis)
+                    if (file_exists(__DIR__ . '/sendgrid_config.php')) {
+                        require_once __DIR__ . '/sendgrid_mailer.php';
+                        $unsubscribeUrl = (isset($_SERVER['HTTP_HOST']) ? (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] : '') . dirname($_SERVER['SCRIPT_NAME']) . '/unsubscribe.php?t=' . urlencode($token);
+                        $body = '<p>Obrigado por assinar a newsletter da SomaZoi.</p><p>Se desejar cancelar a assinatura, clique aqui: <a href="' . htmlspecialchars($unsubscribeUrl) . '">Cancelar inscrição</a></p>';
+                        $res = sendgrid_send($emailNL, 'Obrigado por assinar a newsletter - SomaZoi', $body, 'Obrigado por assinar a newsletter da SomaZoi. Para cancelar: ' . $unsubscribeUrl);
+                        if ($res['ok']) { try { $l = $pdo->prepare("INSERT INTO newsletter_logs (email, status, message) VALUES (?, 'ok', ?)"); $l->execute([$emailNL, 'welcome sent (sendgrid)']); } catch (Exception $e) {} }
+                        else { try { $l = $pdo->prepare("INSERT INTO newsletter_logs (email, status, message) VALUES (?, 'error', ?)"); $l->execute([$emailNL, $res['error'] ?? 'sendgrid failed']); } catch (Exception $e) {} }
+                    } elseif (file_exists(__DIR__ . '/vendor/autoload.php')) {
+                        require_once __DIR__ . '/mailer.php';
+                        $mail = getMailerInstance();
+                        $mail->addAddress($emailNL);
+                        $mail->Subject = 'Obrigado por assinar a newsletter - SomaZoi';
+                        $unsubscribeUrl = (isset($_SERVER['HTTP_HOST']) ? (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] : '') . dirname($_SERVER['SCRIPT_NAME']) . '/unsubscribe.php?t=' . urlencode($token);
+                        $mail->Body = '<p>Obrigado por assinar a newsletter da SomaZoi.</p><p>Se desejar cancelar a assinatura, clique aqui: <a href="' . htmlspecialchars($unsubscribeUrl) . '">Cancelar inscrição</a></p>';
+                        $mail->AltBody = 'Obrigado por assinar a newsletter da SomaZoi. Para cancelar, acesse: ' . $unsubscribeUrl;
+                        $mail->send();
+                        try { $l = $pdo->prepare("INSERT INTO newsletter_logs (email, status, message) VALUES (?, 'ok', ?)"); $l->execute([$emailNL, 'welcome sent']); } catch (Exception $e) {}
+                    }
+                } catch (Exception $e) {
+                    // ignorar problemas do envio de boas-vindas — inscrição não falha por isso
+                    try { $l = $pdo->prepare("INSERT INTO newsletter_logs (email, status, message) VALUES (?, 'error', ?)"); $l->execute([$emailNL, $e->getMessage()]); } catch (Exception $e) {}
+                }
             }
         } catch (PDOException $e) {
             $newsletterMsg = "Erro ao processar inscrição. Tente novamente.";
@@ -101,10 +131,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reflexos do Futuro</title>
+    <title>Home - SomaZoi</title>
     <link href='https://fonts.googleapis.com/css?family=Inter' rel='stylesheet'>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="layout.css" />
+    <link rel="icon" type="image/x-icon" href="img/Ícone - Azul claro.png">
     <style>
         /* FAQ - estilos mínimos */
         html {
@@ -470,7 +501,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
             </div>
 
             <div class="footer-links">
-                <div class="links-col">
+                <div class="links-col" class="useful-links">
                     <h4>Links úteis</h4>
                     <ul>
                         <li><a href="#about" class="nav-link">Sobre</a></li>
@@ -488,11 +519,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
                     </ul>
                 </div>
 
+                <!--
                 <div class="links-col contact-col">
                     <h4>Contato e newsletter</h4>
                     <p>Receba atualizações e dicas de cuidado diretamente no seu e-mail.</p>
                     <?php if (!empty($newsletterMsg)): ?>
-                        <p style="color:green;"><?= htmlspecialchars($newsletterMsg) ?></p>
+                        <p style="color: #F4D35E;"><b><?= htmlspecialchars($newsletterMsg) ?></b></p>
                     <?php endif; ?>
                     <form id="newsletter-form" class="newsletter-form" method="POST" aria-label="Formulário de newsletter">
                         <label for="newsletter-email" class="visually-hidden">E-mail</label>
@@ -501,6 +533,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["newsletter"])) {
                     </form>
                     <p class="contact-info">E-mail: <a href="mailto:contato@somazoi.com">contato@somazoi.com</a><br>Telefone: (11) 4000-0000</p>
                 </div>
+                -->
+
             </div>
         </div>
 

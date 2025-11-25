@@ -17,6 +17,20 @@ try {
     if ($tipo === 'cuidador'){
         if (isset($_GET['idoso_id']) && intval($_GET['idoso_id'])>0){
             $idus = intval($_GET['idoso_id']);
+            // verificar vínculo cuidador <-> idoso
+            try {
+                $check = $pdo->prepare("SELECT id FROM cuidador_idoso WHERE cuidador_id = ? AND idoso_id = ?");
+                $check->execute([$_SESSION['usuario_id'], $idus]);
+                if ($check->rowCount() === 0) {
+                    // não autorizado a ver esse idoso
+                    echo json_encode([]);
+                    exit;
+                }
+            } catch (Exception $e) {
+                echo json_encode([]);
+                exit;
+            }
+
             $sql = "SELECT t.id, t.usuario_id, t.descricao, t.horario, t.status, u.nome
                     FROM tarefas t
                     LEFT JOIN usuarios u ON u.id = t.usuario_id

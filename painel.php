@@ -21,12 +21,129 @@
 
         date_default_timezone_set('America/Sao_Paulo');
 
+        // Mensagens de ações realizadas no painel do cuidador / idoso
+        $painel_msg = '';
+        $display_token = null; // token texto a ser mostrado ao idoso quando solicitado (regeneração)
+
+        // Permitir que o idoso gere/exiba seu token (apenas no painel do próprio idoso)
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tipo === 'idoso' && !empty($_POST['regen_token'])) {
+            try {
+                // garantir coluna token_hash
+                $col = $pdo->query("SHOW COLUMNS FROM usuarios LIKE 'token_hash'")->fetch();
+                if (!$col) $pdo->exec("ALTER TABLE usuarios ADD COLUMN token_hash VARCHAR(255) NULL DEFAULT NULL AFTER senha");
+
+                // gerar novo token e salvar hash
+                try { $tokenPlain = bin2hex(random_bytes(12)); } catch(Exception $e) { $tokenPlain = bin2hex(openssl_random_pseudo_bytes(12)); }
+                $tokenHash = password_hash($tokenPlain, PASSWORD_DEFAULT);
+                $up = $pdo->prepare("UPDATE usuarios SET token_hash = ? WHERE id = ?");
+                $up->execute([$tokenHash, $usuario_id]);
+                $display_token = $tokenPlain;
+                $painel_msg = 'Código gerado com sucesso — compartilhe com seu cuidador. (Este código só será exibido uma vez)';
+            } catch (Exception $e) {
+                $painel_msg = 'Não foi possível gerar código: ' . $e->getMessage();
+            }
+        }
+
+        // Processar ações POST do cuidador: vincular idoso por token ou criar idoso novo
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tipo === 'cuidador') {
+            // Vincular idoso via token
+            if (!empty($_POST['link_token'])) {
+                $token = trim($_POST['link_token']);
+                try {
+                    // garantir que tabela de usuários tenha token_hash
+                    $stmt = $pdo->prepare("SELECT id, nome, token_hash FROM usuarios WHERE tipo = 'idoso' AND token_hash IS NOT NULL");
+                    $stmt->execute();
+                    $found = false;
+                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        if (password_verify($token, $row['token_hash'])) {
+                            $idoso_id = (int) $row['id'];
+                            // garantir tabela de mapeamento
+                            $pdo->exec("CREATE TABLE IF NOT EXISTS cuidador_idoso (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                cuidador_id INT NOT NULL,
+                                idoso_id INT NOT NULL,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                UNIQUE KEY (cuidador_id, idoso_id)
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+
+                            // verificar se já está vinculado
+                            $check = $pdo->prepare("SELECT id FROM cuidador_idoso WHERE cuidador_id = ? AND idoso_id = ?");
+                            $check->execute([$usuario_id, $idoso_id]);
+                            if ($check->rowCount() > 0) {
+                                $painel_msg = 'Este idoso já está vinculado ao seu painel.';
+                            } else {
+                                $ins = $pdo->prepare("INSERT INTO cuidador_idoso (cuidador_id, idoso_id) VALUES (?, ?)");
+                                $ins->execute([$usuario_id, $idoso_id]);
+                                $painel_msg = 'Idoso vinculado com sucesso ao seu painel.';
+                            }
+                            $found = true;
+                            break;
+                        }
+                    }
+                    if (!$found) $painel_msg = 'Código inválido — verifique e tente novamente.';
+                } catch (Exception $e) {
+                    $painel_msg = 'Erro ao tentar vincular idoso: ' . $e->getMessage();
+                }
+            }
+
+            // (Removido: criação de novo idoso pelo cuidador. O fluxo desejado é:
+            // o idoso cria sua própria conta (token gerado) e compartilha o token com o cuidador.)
+        }
+
         if ($tipo === "cuidador") {
-            $idosos = $pdo->query("SELECT id, nome FROM usuarios WHERE tipo = 'idoso'")->fetchAll(PDO::FETCH_ASSOC);
+            // garantir que a tabela de mapeamento exista
+            try {
+                $pdo->exec("CREATE TABLE IF NOT EXISTS cuidador_idoso (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    cuidador_id INT NOT NULL,
+                    idoso_id INT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY (cuidador_id, idoso_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+            } catch (Exception $e) {
+                // se falhar, ignoramos — o app ainda funcionará mas sem mapeamentos
+            }
+
+            // listar somente os idosos vinculados a este cuidador
+            try {
+                $stmt = $pdo->prepare("SELECT u.id, u.nome FROM usuarios u INNER JOIN cuidador_idoso m ON u.id = m.idoso_id WHERE m.cuidador_id = ? ORDER BY u.nome");
+                $stmt->execute([$usuario_id]);
+                $idosos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Exception $e) {
+                // fallback: mostrar nenhum idoso
+                $idosos = [];
+            }
 
             // Filtros dinâmicos por idoso (via GET)
             $filtro_idoso = isset($_GET['idoso_id']) ? intval($_GET['idoso_id']) : null;
-            $where = $filtro_idoso ? "WHERE usuario_id = $filtro_idoso" : "";
+            // validar que o id passado pertence ao cuidador (evita sacar dados de outros idosos)
+            if ($filtro_idoso) {
+                try {
+                    $c = $pdo->prepare("SELECT id FROM cuidador_idoso WHERE cuidador_id = ? AND idoso_id = ?");
+                    $c->execute([$usuario_id, $filtro_idoso]);
+                    if ($c->rowCount() === 0) {
+                        // não pertence — ignora filtro
+                        $filtro_idoso = null;
+                    }
+                } catch (Exception $e) {
+                    $filtro_idoso = null;
+                }
+            }
+            // montar $where: se filtro_idoso válido, filtra por ele.
+            // caso contrário, usar os idosos vinculados ao cuidador (para limitar consultas ao escopo do usuário)
+            $where = '';
+            if ($filtro_idoso) {
+                $where = "WHERE usuario_id = $filtro_idoso";
+            } else {
+                // usa os idosos já carregados em $idosos
+                $linkedIds = array_map(function($r){ return (int)$r['id']; }, $idosos);
+                if (count($linkedIds) > 0) {
+                    $where = 'WHERE usuario_id IN (' . implode(',', $linkedIds) . ')';
+                } else {
+                    // nenhum idoso vinculado, garante que consultas retornem zero
+                    $where = 'WHERE 1=0';
+                }
+            }
 
             // Helper para montar WHERE/AND corretamente
             function addCond($where, $cond) {
@@ -51,9 +168,15 @@
                 $completionRate = 0;
             }
 
-            // Buscar últimas notificações para mostrar no dashboard
+            // Buscar últimas notificações para mostrar no dashboard, apenas dos idosos vinculados ao cuidador
             try {
-                $notificacoes = $pdo->query("SELECT n.id, n.idoso_id, n.tipo, n.mensagem, n.created_at, u.nome AS idoso_nome FROM notificacoes n LEFT JOIN usuarios u ON n.idoso_id = u.id ORDER BY n.created_at DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+                $stmt = $pdo->prepare("SELECT n.id, n.idoso_id, n.tipo, n.mensagem, n.created_at, u.nome AS idoso_nome
+                    FROM notificacoes n
+                    LEFT JOIN usuarios u ON n.idoso_id = u.id
+                    INNER JOIN cuidador_idoso m ON m.idoso_id = n.idoso_id AND m.cuidador_id = ?
+                    ORDER BY n.created_at DESC LIMIT 10");
+                $stmt->execute([$usuario_id]);
+                $notificacoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             } catch (Exception $e) {
                 $notificacoes = [];
             }
@@ -72,6 +195,7 @@
             <link href='https://fonts.googleapis.com/css?family=Inter' rel='stylesheet'>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
             <link rel="stylesheet" href="layout.css" />
+            <link rel="icon" type="image/x-icon" href="img/Ícone - Azul claro.png">
         <style>
         :root{
             --xlarge: 4rem;
@@ -179,7 +303,7 @@
             <div id="modal-overlay" class="modal-overlay">
                 <div class="modal-popup">
                     <span class="icon"><i class="fa-solid fa-circle-check"></i></span>
-                    <span id="modal-msg">Tarefa cadastrada com sucesso!</span>
+                    <span id="modal-msg">Atividade cadastrada com sucesso!</span>
                 </div>
             </div>
 
@@ -190,10 +314,29 @@
             </div>
 
             <?php if ($tipo === "cuidador"): ?>
+                <!-- Campo de vínculo rápido por token: colocado em local de destaque para o cuidador -->
+                <div class="container" style="margin-left: 267.5px; display:flex; gap:12px; align-items:flex-start;">
+                    <div style="flex:1;">
+                        <h2 style="margin:0 0 6px 0">Vincular idoso (código)</h2>
+                        <form method="POST" style="gap:8px; align-items:center;">
+                            <input type="text" id="link_token_input" name="link_token" placeholder="Cole aqui o código do idoso" class="input-item" style="flex:1; max-width:720px; background:#fff; color:#001520; padding:8px 10px; border-radius:6px; box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;" required>
+                            <button type="submit" class="input-btn" style="padding:8px 16px;">Vincular</button>
+                        </form>
+                        <div id="painel-status" style="margin-top:8px; min-height:22px;">
+                            <?php if (!empty($painel_msg)): ?>
+                                <div style="background: #ffffff; border:1px solid #3AAFA9; padding:8px; border-radius:6px; color: #3AAFA9; display:inline-block;">
+                                    <?php echo $painel_msg; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <p style="margin:6px 0 0 0; font-size:0.9rem; color:#666;">O código é gerado no painel do idoso — peça que ele compartilhe ou utilize a opção 'Ver código' no painel dele.</p>
+                    </div>
+                </div>
+
                 <div class="container" style="margin-left: 267.5px">
                     <h2>Cadastrar nova atividade</h2>
                     <br>
-                    <form method="POST" action="cadastrar_tarefa.php">
+                        <form method="POST" action="cadastrar_tarefa.php">
                         <label>Escolha o idoso(a):</label><br>
                         <select name="idoso_id" required class="input-item">
                             <?php foreach ($idosos as $i): ?>
@@ -204,14 +347,15 @@
                         </select><br><br>
 
                         <label>Descrição:</label><br>
-                        <input type="text" name="descricao" class="input-item" required><br><br>
+                        <input type="text" name="descricao" class="input-item" style="padding-left: 4px" required><br><br>
 
                         <label>Data e hora:</label><br>
-                        <input type="datetime-local" name="horario" class="input-item" required><br><br>
+                        <input type="datetime-local" name="horario" class="input-item" style="padding-left: 4px" required><br><br>
 
                         <button type="submit" class="input-btn">Cadastrar</button>
                     </form>
                 </div>
+
                 <!-- Calendário para cuidador (ver tarefas por idoso) -->
                 <div class="container" style="margin-top:20px; margin-left: 267.5px">
                     <h2>Calendário</h2>
@@ -244,7 +388,7 @@
                     </form>
                     <div class="dashboard-grid" style="margin-top:12px;">
                         <div class="stat-card">
-                            <div class="stat-title">Total de tarefas</div>
+                            <div class="stat-title">Total de atividades</div>
                             <div class="stat-value"><?php echo htmlspecialchars($totalTasks); ?></div>
                         </div>
                         <div class="stat-card">
@@ -252,13 +396,37 @@
                             <div class="stat-value"><?php echo htmlspecialchars($completionRate); ?>%</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-title">Tarefas de hoje</div>
+                            <div class="stat-title">Atividades de hoje</div>
                             <div class="stat-value"><?php echo htmlspecialchars($todayCount); ?></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-title">Concluídas / Pendentes / Atrasadas</div>
                             <div class="stat-value"><?php echo htmlspecialchars($concluded); ?> / <?php echo htmlspecialchars($pending); ?> / <?php echo htmlspecialchars($lateCount); ?></div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Listagem de tarefas do cuidador -->
+                <div class="container" style="margin-left: 267.5px; margin-top: 20px;">
+                    <h2>Atividades dos idosos vinculados</h2>
+                    <div class="tarefas-container-cuidador">
+                        <?php
+                        // Buscar tarefas dos idosos vinculados (com filtro, se houver)
+                        $sqlT = "SELECT t.*, u.nome as idoso_nome FROM tarefas t INNER JOIN usuarios u ON u.id = t.usuario_id $where ORDER BY t.horario DESC";
+                        $resT = $pdo->query($sqlT);
+                        while ($t = $resT->fetch(PDO::FETCH_ASSOC)):
+                        ?>
+                        <div class="tarefa" data-id="<?php echo $t['id']; ?>" data-usuario="<?php echo $t['usuario_id']; ?>" data-descricao="<?php echo htmlspecialchars($t['descricao'], ENT_QUOTES); ?>" data-horario="<?php echo $t['horario']; ?>" data-status="<?php echo $t['status']; ?>">
+                            <strong><?php echo htmlspecialchars($t['descricao']); ?></strong> - <?php echo $t['horario']; ?>
+                            <span style="color:#666;">(Idoso: <?php echo htmlspecialchars($t['idoso_nome']); ?>)</span>
+                            <?php if ($t['status'] === 'concluida'): ?>
+                                <br>
+                                <span style="color:green;">✅ Concluída</span>
+                            <?php endif; ?>
+                            <button class="editar-tarefa-btn input-btn">Editar</button>
+                        </div>
+                        <hr>
+                        <?php endwhile; ?>
                     </div>
                 </div>
 
@@ -292,6 +460,67 @@
 
             <?php if ($tipo === "idoso"): ?>
                 <div class="container-perfil-idoso <?php echo ($tipo === 'idoso') ? 'idoso' : ''; ?>" style="margin-top: 40px">
+                    <!-- Área de token do idoso (visível apenas para o próprio idoso) -->
+                    <div class="token-idoso">
+                        <h2>Código do perfil (compartilhe com seu cuidador)</h2>
+                        <br>
+                        <p>Este código permite que um cuidador vincule seu perfil e possa atribuir atividades ou ver calendários/notificações. O código é gerado pelo sistema — quando você clicar em "Ver cóigo" ele será exibido uma vez e substituído por um novo.</p>
+                        <br>
+                        <!-- Sempre mostrar o botão Ver token; o modal só aparecerá quando o token for gerado via POST -->
+                        <form method="POST" style="gap:8px; align-items:center; margin-top:6px; display:inline-block;">
+                            <input type="hidden" name="regen_token" value="1" />
+                            <button type="submit" class="input-btn" style="padding:10px 14px;">Ver código</button>
+                            <br>
+                            <small style="color:#666; display:block; max-width:560px; margin-top:6px;">Ao clicar em Ver código o sistema irá gerar e mostrar o código uma vez — o código anterior deixará de valer.</small>
+                        </form>
+
+                        <?php if (!empty($display_token) && $_SERVER['REQUEST_METHOD'] === 'POST'): ?>
+                            <!-- Render a modal-style overlay with the token (displayed once, only right after clicking Ver token) -->
+                            <div id="token-modal" class="modal-overlay" style="z-index:12000;">
+                                <div class="modal-popup" style="max-width:920px; width:90%; background:var(--white); color:var(--dark-blue); text-align:center;">
+                                    <h2 style="font-size:28px; margin-bottom:6px;">CÓDIGO DO PERFIL (COMPARTILHE COM SEU CUIDADOR)</h2>
+                                    <p style="color:#444; margin:0 6px 18px 6px;">Este código permite que um cuidador vincule seu perfil e possa atribuir atividades ou ver calendários/notificações. Guarde-o em local seguro — ele será exibido agora.</p>
+                                    <div class="code" style="margin-top:10px; background:#fff3f3; padding:20px;">
+                                        <div style="font-family:monospace; font-size:16px; word-break:break-all; color:#001520; margin-bottom:14px;">
+                                            <?php echo htmlspecialchars($display_token); ?>
+                                        </div>
+                                        <div style="display:flex; gap:8px; justify-content:center; align-items:center;">
+                                            <button id="copy-token-btn" class="input-btn" style="max-width:360px; padding:12px 18px;">Copiar</button>
+                                            <button id="close-token-btn" class="input-btn" style="background:#ccc; color:#001520; max-width:160px; padding:12px 18px;">Fechar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <script>
+                                (function(){
+                                    const modal = document.getElementById('token-modal');
+                                    const copyBtn = document.getElementById('copy-token-btn');
+                                    const closeBtn = document.getElementById('close-token-btn');
+
+                                    // Add `active` shortly after paint so the CSS enter animation runs
+                                    requestAnimationFrame(() => {
+                                        setTimeout(() => modal.classList.add('active'), 20);
+                                    });
+
+                                    // Copy handler
+                                    if (copyBtn) copyBtn.addEventListener('click', function(e){
+                                        e.preventDefault();
+                                        navigator.clipboard.writeText(<?php echo json_encode($display_token); ?>).then(()=>{
+                                            alert('Token copiado para a área de transferência');
+                                        }).catch(()=>{ alert('Falha ao copiar o token.'); });
+                                    });
+
+                                    // Close handler — remove class to trigger the same animation used on close
+                                    if (closeBtn) closeBtn.addEventListener('click', function(e){
+                                        e.preventDefault();
+                                        modal.classList.remove('active');
+                                        // after animation completes, hide it to keep DOM tidy
+                                        setTimeout(()=>{ try{ modal.style.display = 'none'; }catch(e){} }, 420);
+                                    });
+                                })();
+                            </script>
+                        <?php endif; ?>
+                    </div>
                     <div class="split-area">
                         <div class="tarefas-container">
                         <h2>Suas atividades de hoje</h2>
@@ -485,14 +714,6 @@
                                         let b = Math.abs(currentFrame.data[i + 2] - lastFrame.data[i + 2]);
 
                                         if (r + g + b > 100) diff++;
-                                    }
-
-                                    if (diff > 2000) {
-                                        // Movimento detectado — não disparar notificação automaticamente.
-                                        // Apenas manter comportamento visual local opcional (não notifica o cuidador).
-                                        // Se quiser, podemos mostrar um pequeno indicador local, mas não
-                                        // enviar nada ao servidor aqui, para evitar falsos positivos.
-                                        // Ex.: alerta.style.display = 'block'; setTimeout(()=>{ alerta.style.display='none'; }, 800);
                                     }
                                 }
 
@@ -880,7 +1101,7 @@
                 fetchTarefas().then(tasks=>{
                     const myTasks = tasks.filter(t=>t.usuario_id == usuarioId);
                     renderCalendar(cont, now.getFullYear(), now.getMonth(), myTasks);
-                }).catch(err=>console.error('Erro ao carregar tarefas (idoso):', err));
+                }).catch(err=>console.error('Erro ao carregar atividades (idoso):', err));
             }
 
             function initCuidadorCalendar(){
@@ -894,7 +1115,7 @@
                     if (!id) { cont.innerHTML=''; return; }
                     fetchTarefas(id).then(tasks=>{
                         renderCalendar(cont, now.getFullYear(), now.getMonth(), tasks);
-                    }).catch(err=>console.error('Erro ao carregar tarefas (preview):', err));
+                    }).catch(err=>console.error('Erro ao carregar atividades (preview):', err));
                 });
 
                 btn.addEventListener('click', ()=>{
@@ -903,7 +1124,7 @@
                     fetchTarefas(id).then(tasks=>{
                         renderCalendar(cont, now.getFullYear(), now.getMonth(), tasks);
                         cont.scrollIntoView({behavior:'smooth', block:'start'});
-                    }).catch(err=>console.error('Erro ao carregar tarefas (ver):', err));
+                    }).catch(err=>console.error('Erro ao carregar atividades (ver):', err));
                 });
             }
 
@@ -937,5 +1158,6 @@
                 setInterval(refreshNotificacoes, 10000);
             }
             </script>
+
         </body>
         </html>

@@ -14,6 +14,18 @@ if (isset($_POST['descricao'], $_POST['horario'], $_POST['idoso_id'])) {
     $horario = $_POST['horario'];
     $idoso_id = intval($_POST['idoso_id']);
 
+    // Verificar se o cuidador está vinculado a esse idoso
+    try {
+        $check = $pdo->prepare("SELECT id FROM cuidador_idoso WHERE cuidador_id = ? AND idoso_id = ?");
+        $check->execute([$_SESSION['usuario_id'], $idoso_id]);
+        if ($check->rowCount() === 0) {
+            exit('Acesso negado: você não está vinculado a este idoso.');
+        }
+    } catch (Exception $e) {
+        // se a tabela não existir ou houver erro, negar por segurança
+        exit('Acesso negado (validação de vínculo falhou).');
+    }
+
     // Normalizar para formato 'Y-m-d H:i:s' usando timezone explícita
     $tz = new DateTimeZone('America/Sao_Paulo');
     $dt = DateTime::createFromFormat('Y-m-d\TH:i', $horario, $tz);

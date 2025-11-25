@@ -26,10 +26,36 @@ if($_SERVER["REQUEST_METHOD"] == "POST")
     }
     else
     {
-    $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha, sobrenome, data_nascimento, tipo, endereco, tel) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    if($stmt->execute([$nome, $email, $senha, $sobrenome, $data_nascimento, $tipo, $endereco, $tel]))
+    // Se o usuário for do tipo 'idoso', geramos um token permanente (único) e armazenamos o hash
+    $tokenPlain = null;
+    if ($tipo === 'idoso') {
+        // garantir que a coluna token_hash exista
+        try {
+            $colCheck = $pdo->query("SHOW COLUMNS FROM usuarios LIKE 'token_hash'")->fetch();
+            if (!$colCheck) {
+                $pdo->exec("ALTER TABLE usuarios ADD COLUMN token_hash VARCHAR(255) NULL DEFAULT NULL AFTER senha");
+            }
+        } catch (Exception $e) {
+            // se não for possível alterar a tabela, contínua sem token (fail-safe)
+            error_log('Aviso: não foi possível garantir coluna token_hash: ' . $e->getMessage());
+        }
+
+        // gerar token (24 hex chars, ~12 bytes)
+        try { $tokenPlain = bin2hex(random_bytes(12)); } catch(Exception $e) { $tokenPlain = bin2hex(openssl_random_pseudo_bytes(12)); }
+        $tokenHash = password_hash($tokenPlain, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha, sobrenome, data_nascimento, tipo, endereco, tel, token_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $params = [$nome, $email, $senha, $sobrenome, $data_nascimento, $tipo, $endereco, $tel, $tokenHash];
+    } else {
+        $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha, sobrenome, data_nascimento, tipo, endereco, tel) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $params = [$nome, $email, $senha, $sobrenome, $data_nascimento, $tipo, $endereco, $tel];
+    }
+    if($stmt->execute($params))
         {
-            $mensagem = "Cadastro realizado com sucesso!";
+            if ($tokenPlain) {
+                $mensagem = "Cadastro realizado com sucesso! Copie o token do(a) idoso(a): <strong>" . htmlspecialchars($tokenPlain) . "</strong>. Guarde em local seguro — o cuidador usará esse token para vinculá-lo(a).";
+            } else {
+                $mensagem = "Cadastro realizado com sucesso!";
+            }
         }
         else
         {
